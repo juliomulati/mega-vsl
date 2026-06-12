@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MEGA VSL — Gerador de Análise</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f13;
+      --surface: #18181f;
+      --border: #2a2a38;
+      --accent: #1A3FFF;
+      --accent-dim: #0a1560;
+      --text: #e8e8f0;
+      --text-muted: #8888a0;
+      --green: #22c55e;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 16px;
+    }
+
+    .wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+
+    .logo-box {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-box img {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+    }
+
+    /* SVG fallback logo */
+    .logo-svg {
+      width: 44px;
+      height: 44px;
+    }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    header span {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 400;
+      margin-top: 1px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 18px;
+    }
+
+    /* ── Form ── */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 200px;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 560px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 14px;
+      font-family: inherit;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.15s;
+      appearance: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238888a0' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+
+    .script-area {
+      margin-bottom: 20px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 280px;
+      line-height: 1.6;
+    }
+
+    .char-count {
+      text-align: right;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* ── Button ── */
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      letter-spacing: 0.2px;
+    }
+
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:active { transform: scale(0.99); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ── Output ── */
+    .output-card { display: none; }
+    .output-card.visible { display: block; }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(26, 63, 255, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(26, 63, 255, 0.3);
+    }
+
+    .btn-copy {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 18px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-copy.copied {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .prompt-output {
+      width: 100%;
+      min-height: 200px;
+      max-height: 400px;
+      font-size: 13px;
+      line-height: 1.65;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      color: #c8c8e0;
+      resize: vertical;
+    }
+
+    /* ── Steps ── */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      width: 26px;
+      height: 26px;
+      background: rgba(26, 63, 255, 0.15);
+      border: 1px solid rgba(26, 63, 255, 0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-text {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+
+    .step-text strong { color: var(--text); }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      margin-top: 36px;
+      font-size: 12px;
+      color: #555570;
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="logo-box">
+      <!-- Substitua pelo logo real: <img src="logo.png" alt="Megafone" /> -->
+      <svg class="logo-svg" viewBox="0 0 100 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Cone esquerdo escuro -->
+        <polygon points="0,30 22,44 22,44 0,58" fill="#0d1240"/>
+        <!-- Corpo principal azul -->
+        <rect x="18" y="2" width="80" height="84" rx="14" fill="#1A3FFF"/>
+        <!-- Recorte esquerdo (criando forma M) -->
+        <rect x="18" y="2" width="22" height="44" rx="6" fill="#0f0f13"/>
+        <!-- Recorte central -->
+        <rect x="54" y="2" width="22" height="44" rx="6" fill="#0f0f13"/>
+      </svg>
+    </div>
+    <div>
+      <h1>MEGA VSL</h1>
+      <span>Gerador de Análise — Framework LHTO</span>
+    </div>
+  </header>
+
+  <!-- Como usar -->
+  <div class="card">
+    <div class="card-title">Como usar</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">Preencha o <strong>nome do produto</strong>, escolha o <strong>tipo de script</strong> e cole o <strong>texto da VSL</strong> abaixo.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Clique em <strong>Gerar Prompt</strong> e depois em <strong>Copiar Prompt</strong>.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Cole o prompt numa <strong>conversa nova no Claude</strong> (claude.ai) e envie. O Claude fará a análise completa com score e sugestões de reescrita.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulário -->
+  <div class="card">
+    <div class="card-title">Script para analisar</div>
+
+    <div class="form-row">
+      <div>
+        <label for="product">Nome do produto</label>
+        <input type="text" id="product" placeholder="Ex: Libras e Saúde" />
+      </div>
+      <div>
+        <label for="scriptType">Tipo de script</label>
+        <select id="scriptType">
+          <option value="VSL">VSL principal</option>
+          <option value="Upsell">Upsell</option>
+          <option value="Downsell">Downsell</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="script-area">
+      <label for="script">Script completo</label>
+      <textarea id="script" placeholder="Cole aqui o roteiro completo da VSL..."></textarea>
+      <div class="char-count"><span id="charCount">0</span> caracteres</div>
+    </div>
+
+    <button class="btn-primary" id="generateBtn" onclick="generatePrompt()">
+      ⚡ Gerar Prompt de Análise
+    </button>
+  </div>
+
+  <!-- Output -->
+  <div class="card output-card" id="outputCard">
+    <div class="output-header">
+      <div>
+        <div class="card-title" style="margin-bottom: 4px;">Prompt gerado</div>
+        <span class="badge" id="outputBadge">VSL — Produto</span>
+      </div>
+      <button class="btn-copy" id="copyBtn" onclick="copyPrompt()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copiar Prompt
+      </button>
+    </div>
+    <textarea class="prompt-output" id="promptOutput" readonly></textarea>
+  </div>
+
+  <footer>Megafone Digital · MEGA VSL Framework LHTO</footer>
+
+</div>
+
+<script>
+const FRAMEWORK = `# FRAMEWORK MESTRE DE ANÁLISE DE VSL
+Baseado na metodologia do Curso de Copy — Módulo 03 | VSL
+
+---
+
+## PRINCÍPIO CENTRAL
+
+Toda VSL é composta por 4 blocos essenciais na ordem LHTO:
+
+LEAD → HISTÓRIA → TESE DE MARKETING → OFERTA
+
+O objetivo de cada bloco é fazer o prospect tomar mini decisões psicológicas que culminam na compra. Há 3 vendas psicológicas que precisam acontecer dentro desse fluxo.
+
+---
+
+## AS 3 VENDAS PSICOLÓGICAS
+
+### Venda 01 — VENDA DO CONTEÚDO (ocorre no LEAD)
+O prospect precisa responder "sim" para:
+- Por que eu deveria parar o que estou fazendo para assistir esse vídeo?
+- O que eu vou ganhar assistindo até o final?
+
+### Venda 02 — VENDA DA ESPERANÇA (ocorre na HISTÓRIA e na TESE)
+O prospect precisa responder "sim" para:
+- Por que eu deveria confiar em você?
+- Por que você acha que pode me ajudar?
+- Como você descobriu isso?
+- O que realmente causa meu problema?
+- O que eu preciso fazer para resolver isso?
+- Como eu consigo fazer isso?
+
+### Venda 03 — VENDA DO VALOR (ocorre na OFERTA)
+O prospect precisa responder "sim" para:
+- O que você tem a oferecer?
+- O que eu tenho a ganhar com isso?
+- Por que você acha que isso daria certo pra mim?
+- O que eu vou receber?
+- Quanto eu preciso pagar?
+- Quais riscos eu corro?
+- Por que eu deveria agir agora?
+
+---
+
+## BLOCO 01 — LEAD
+
+"O 80/20 da sua VSL é a LEAD" — o bloco mais crítico de toda VSL.
+
+Objetivo: Prender a atenção imediatamente, despertar curiosidade, fazer uma promessa forte.
+Função: Fazer a Venda do Conteúdo. O prospect precisa sentir que VALE A PENA continuar assistindo.
+
+### O que o Lead precisa fazer obrigatoriamente:
+- Citar coisas do interesse do público
+- Apresentar o problema que ele possui
+- Falar algo muito curioso sobre o assunto
+- Disfarçar a intenção de venda e citar coisas curiosas para ele continuar assistindo
+- Elementos de curiosidade com base em conteúdos que sejam do interesse dele, intrigantes, que falem sobre o problema dele e tragam credibilidade e prova
+- COLOCAR PROVAS após cada argumentação
+
+### As 4 Metodologias de Lead (professor cria 4 versões por VSL):
+1. Modelando Estrutura Oculta de uma VSL Escalada
+2. Expandindo AD Escalado
+3. Modelando Vídeo do YouTube
+4. Feeling — criação por intuição, sem modelo fixo
+
+### Regras obrigatórias da Lead:
+- Ganchos: Usar ângulos (não ganchos genéricos)
+- VENDA DE CONTEÚDO: a lead precisa fazer o prospect acreditar que a VSL vai resolver os problemas dele e que ali dentro terá algo que vai ajudá-lo de verdade (de graça)
+- Depoimentos na Lead: podem ser usados para credibilidade — NAO DEIXE EXPLÍCITO QUE SÃO ALUNOS/CURSO
+- Compromisso: Usar o "Hack do Presente" para gerar comprometimento emocional
+
+### Micro LEADs (ganchos dentro da VSL):
+- Hooks menores ao longo do conteúdo para manter a atenção
+- Aplicados nas transições entre blocos
+
+### Checklist RMBC de Headline (7 elementos):
+1. Curiosidade — O mais importante — cria lacuna de informação irresistível
+2. Call Out Pain Point — Grita o ponto de dor do público (seja cirúrgico, não genérico)
+3. Promessa de Solução — O que resolve o problema
+4. Especificidade — Números, detalhes concretos
+5. Simplicidade — Fácil de entender de primeira
+6. Credibilidade / Ceticismo — Elemento que barra a descrença
+7. Prazo para alcançar o resultado
+
+### Critérios de qualidade do LEAD:
+- Gancho inicial: Forte = Ângulo específico e inesperado | Fraco = Genérico, já ouvido antes
+- Promessa: Forte = Específica, mensurável, crível | Fraco = Vaga ou exagerada
+- Curiosidade: Forte = Cria lacuna de informação clara | Fraco = Não gera tensão/interesse
+- Provas: Forte = Aparecem após cada argumento | Fraco = Ausentes ou agrupadas no final
+- Venda do Conteúdo: Forte = Prospect acredita que ganhará algo de graça e valioso | Fraco = Parece apenas um pitch de venda
+- Micro LEADs: Forte = Há ganchos de retenção ao longo da VSL | Fraco = A atenção é mantida só no início
+
+---
+
+## BLOCO 02 — HISTÓRIA
+
+Objetivo: Humanizar, criar conexão emocional, estabelecer autoridade e credibilidade.
+Função: Iniciar a Venda da Esperança.
+
+### Os 3 Tipos de História:
+
+Tipo 1 — HISTÓRIA DE FUNDO (Credibilidade)
+- Estabelece quem é o apresentador e por que ele tem autoridade
+- Usa prova social: números, resultados, reconhecimento
+- Objetivo: Responder "Por que devo confiar nessa pessoa?"
+
+Tipo 2 — HISTÓRIA EMOCIONAL (Jornada do Herói)
+- Mundo Comum → Desafios e dores → Ponto de virada → Transformação → Conexão com a tese
+- Objetivo: Responder "Essa pessoa já esteve onde estou agora?"
+
+Tipo 3 — HISTÓRIA DE DESCOBERTA
+- Conta como o apresentador descobriu o mecanismo único da solução
+- É a ponte narrativa entre a História Emocional e a Tese
+- Revela o "eureka" — o momento em que tudo fez sentido
+- Objetivo: Responder "Como ele descobriu isso?"
+
+### O que a História precisa fazer obrigatoriamente:
+- Identificar o apresentador com as dores e frustrações do público
+- Mostrar vulnerabilidade e autenticidade (não perfeição)
+- Estabelecer por que o apresentador pode ajudar (credibilidade)
+- Conectar naturalmente com a solução/tese que vem a seguir
+- Manter concisão e relevância
+
+### Critérios de qualidade da HISTÓRIA:
+- Identificação: Forte = Público se vê no apresentador | Fraco = Apresentador parece distante
+- Autenticidade: Forte = Mostra dificuldades reais | Fraco = Foca só em glórias e vitórias
+- Credibilidade: Forte = Justifica por que pode ajudar | Fraco = Não fica claro por que confiar
+- Descoberta: Forte = Tem o momento "eureka" que abre a Tese | Fraco = Passa diretamente ao método sem narrativa
+- Transição: Forte = Leva naturalmente à tese | Fraco = Parece descolada do restante
+
+---
+
+## BLOCO 03 — TESE DE MARKETING
+
+Objetivo: Vender VALOR e CONTEÚDO. Gerar o "Hmmm, isso faz sentido!". Não vender a oferta aqui.
+Função: Completar a Venda da Esperança.
+
+### O Processo PNM (Primário → Necessário → Mecanismo)
+
+Conclusão Inevitável: "[Desejo Necessário] é a chave pra alcançar [Desejo Primário] e isso só é possível através do meu [Mecanismo Único]"
+
+Desejo Primário (baseado em Maslow):
+1. Não morrer, aproveitar a vida e viver mais tempo
+2. Desfrutar comidas e bebidas
+3. Liberdade de medos, dores e perigos
+4. Romance, ter um parceiro sexual
+5. Condições confortáveis
+6. Ser superior, vencer, não ficar pra trás
+7. Cuidar e proteger quem amamos
+8. Aprovação Social
+
+Desejo Necessário: O veículo específico que o prospect precisa para alcançar o Desejo Primário.
+
+Mecanismo Único: O diferencial exclusivo da solução.
+- Mecanismo do Problema — a real causa raiz do problema
+- Mecanismo da Função — qual veículo a pessoa precisa
+- Mecanismo da Solução — para onde esse veículo leva
+- Mecanismo Único — a única coisa que a pessoa precisa
+
+### Tipos de Tese por Nicho:
+
+Causa Raiz (Saúde/Beleza):
+- Explica por que o problema existe de verdade
+- O prospect nunca havia ouvido essa explicação antes
+- Apresenta prova científica/autoridade
+- Conecta a causa raiz ao mecanismo da solução
+
+Nova Oportunidade (Renda Extra):
+1. Cita tudo que ela já tentou
+2. Explica porque não deu certo
+3. Mostra que tem algo novo, superior, mais fácil e mais rápido
+
+Mecanismo 2.0 (Relacionamento):
+1. Aponta mecanismo já conhecido
+2. Comprova que funciona
+3. Apresenta versão superior (2.0)
+
+### Como construir uma boa Tese:
+1. Cite as frustrações que a pessoa já tentou resolver
+2. Explique por que tudo que ela fez não funcionou
+3. Aponte um grande vilão (mecanismo do problema)
+4. Explique como ele age + Prova
+5. Transicione para a verdadeira solução
+6. Apresente o Mecanismo Único
+
+### Gradalização:
+- Construa Premissas em sequência, cada uma apoiando a próxima
+- Cada ponto lógico deve ser crível antes de avançar
+
+### Elementos de Prova (use múltiplos):
+- Fonte altamente confiável, Autoridades do nicho, Fontes Bibliográficas
+- Reconheça a descrença, Provas Sociais, Pontos de Vista externos
+- Reason Why, Mecanismo explicado, Analogia
+- Prova demonstrativa, Exposição do produto, Sinceridade
+
+### Pós-Pitch — Os 3 perfis:
+- 10% — já quer comprar
+- 40% — não quer comprar
+- 50% — "talvez" → É aqui que se faz a venda (use "Joga Pedra": bônus irresistíveis, reforço de garantia, apelo emocional)
+
+### O que a Tese NÃO pode fazer:
+- Vender a oferta diretamente
+- Revelar o preço antes de construir valor
+- Ser uma sequência de claims sem provas
+- Confrontar crenças existentes do público de frente
+
+### Critérios de qualidade da TESE:
+- Processo PNM: Forte = Desejo Primário → Necessário → Mecanismo claramente articulados | Fraco = Confuso
+- Gradalização: Forte = Constrói premissas em sequência | Fraco = Pede que acreditem em tudo de uma vez
+- Mecanismo Único: Forte = Explica o "porquê" de forma clara e nova | Fraco = Genérico
+- Provas: Forte = Múltiplos tipos | Fraco = Ausentes ou muito genéricas
+- Pós-Pitch: Forte = Tem estratégia para os 50% indecisos | Fraco = Termina sem converter os indecisos
+
+---
+
+## BLOCO 04 — OFERTA
+
+Objetivo: Converter o interesse em compra.
+Função: Fazer a Venda do Valor.
+
+### Estrutura completa da Oferta (14 seções):
+
+1. APRESENTAÇÃO DO PRODUTO — "O único [TIPO] que te ensina como [BENEFÍCIO] para [PÚBLICO] em [TEMPO]"
+2. DEFINIÇÃO DO PÚBLICO-ALVO — "Este produto foi feito para [perfil] que deseja [objetivo]"
+3. CONTEÚDO E ENTREGÁVEIS — Liste 5-7 itens com benefício por item
+4. BENEFÍCIOS E TRANSFORMAÇÃO — "Depois que você usar [produto]..." + quebra de objeções
+5. PROVA SOCIAL — Situação inicial + aplicação do método + resultado final (nome, contexto)
+6. REFORÇO DA PROPOSTA — Repetição de quebra de objeções
+7. ANCORAGEM EMOCIONAL — Perguntas de visualização e série de valor crescente
+8. REVELAÇÃO DO PREÇO — Ancoragem alta → justificativa de desconto → revelação gradual
+9. PROCESSO DE COMPRA — CTA claro + o que acontece após o clique + opções de pagamento
+10. GARANTIA — Começa com 7 dias (CDC) → AMPLIA → Inversão total de risco
+11. BÔNUS — Cada bônus com valor individual declarado: "Geralmente vendido por R$X, mas grátis agora"
+12. EMPILHAMENTO DE VALOR — Total percebido vs. preço real
+13. FECHAMENTO COM DUAS OPÇÕES — Opção 1 (não comprar): consequências | Opção 2 (comprar): benefícios
+14. PRESENTE SURPRESA — Bônus surpresa no final, exclusivo para as primeiras X pessoas, urgência final
+
+### Critérios de qualidade da OFERTA:
+- Empilhamento: Forte = Valor percebido >> preço | Fraco = Valor não justificado
+- Prova social: Forte = Depoimentos com situação + resultado | Fraco = Genéricos ou ausentes
+- Garantia: Forte = Inverte o risco completamente | Fraco = Menciona só os 7 dias legais
+- Urgência: Forte = Real e justificada | Fraco = Forçada ou inexistente
+- CTA: Forte = Claro, específico, repetido | Fraco = Vago ou aparece só uma vez
+
+---
+
+## BLOCO 05 — UPSELL
+
+Objetivo: Conseguir o "segundo sim" imediatamente após a compra.
+"Conseguir o segundo sim é 80% de estrutura de oferta e 20% de roteiro."
+
+As 4 Estruturas: A Próxima Coisa | Faça Mais Rápido | Done For You | Manutenção
+
+Os 16 Passos:
+1. Ciclo Aberto — "Seu pedido ainda não foi concluído"
+2. Decisão Inteligente — Reforce a ótima decisão
+3. Amplificação da Dor — O problema específico que ainda existe
+4. Pergunta 3x/2x — "Como você gostaria de obter [resultado] em [tempo]?"
+5. Exclusividade — "Esta oferta NÃO é para todos"
+6. A Única Coisa — O principal diferencial
+7. Oferta — O que vai receber?
+8. Visualização do Futuro
+9. Preço e Valor — Ancoragem
+10. Escassez e Urgência — Genuína
+11. Prova Social
+12. Antecipação de Objeções
+13. Prova Social Visual
+14. Garantia
+15. Bônus e Empilhamento
+16. CTA Final
+
+---
+
+## BLOCO 06 — DOWNSELL
+
+Objetivo: Capturar vendas de quem recusou o upsell com a mesma solução por oferta mais acessível.
+ERRO FATAL: Oferecer produto diferente — destrói a credibilidade.
+
+As 3 Estruturas: Plano de Pagamento Facilitado | Acesso por Tempo Limitado | Versão Sem Bônus
+
+Script — 7 Passos:
+1. Interrupção e Reconhecimento — "Espere! Não feche essa página..."
+2. Validar o Desejo e os 2 Caminhos — Solitário vs. Acompanhado
+3. Justificativa da Oferta Especial — A razão é mais importante que o desconto
+4. Apresentar a Nova Oferta
+5. Prova Social + Garantia
+6. Escassez e Urgência
+7. CTA Final + Quebra de Objeção`;
+
+const INSTRUCTIONS = `Você é um especialista em copy e VSLs da Megafone Digital. Analise o script abaixo com base EXCLUSIVAMENTE no framework LHTO fornecido acima. Não use critérios externos.
+
+## Processo de Análise:
+
+### Passo 1 — Mapeie os blocos
+- LEAD — Do início até o começo da história pessoal
+- HISTÓRIA — Narrativa pessoal (mundo comum → ponto de virada → transformação)
+- TESE DE MARKETING — Mecanismo único, processo PNM, provas, gradalização
+- OFERTA — Apresentação do produto, preço, bônus, garantia, CTA
+- UPSELL — Se presente (analise separadamente)
+- DOWNSELL — Se presente (analise separadamente)
+
+Se história e tese estiverem fundidas (comum), analise-as juntas e explique.
+
+### Passo 2 — Analise cada bloco
+Para cada bloco, avalie:
+1. Pontos Fortes — cite trechos reais do script
+2. Pontos de Melhoria — explique qual critério do framework não foi atendido
+3. Sugestão de Reescrita do trecho mais fraco
+4. Pontuação de 1 a 10
+
+### Passo 3 — Gere o relatório:
+
+---
+
+# ANÁLISE DE VSL — [Nome do Produto]
+**Data:** [data atual]
+
+---
+
+### MAPEAMENTO DOS BLOCOS
+
+| Bloco | Localização no script |
+|---|---|
+| LEAD | [trecho inicial] |
+| HISTÓRIA | [de "..." até "..."] |
+| TESE | [de "..." até "..."] |
+| OFERTA | [de "..." até o final] |
+
+---
+
+### BLOCO 01 — LEAD
+**Pontuação: X/10**
+
+**Pontos Fortes:**
+- [ponto com trecho citado]
+
+**Pontos de Melhoria:**
+- [critério do framework não atendido + explicação]
+
+**Sugestão de Reescrita:**
+[Reescreva o trecho mais fraco. Mantenha o tom e nicho do original.]
+
+---
+
+### BLOCO 02 — HISTÓRIA
+**Pontuação: X/10**
+[mesmo formato]
+
+---
+
+### BLOCO 03 — TESE DE MARKETING
+**Pontuação: X/10**
+[mesmo formato]
+
+---
+
+### BLOCO 04 — OFERTA
+**Pontuação: X/10**
+[mesmo formato]
+
+---
+
+[Se houver UPSELL:]
+### BLOCO 05 — UPSELL
+**Pontuação: X/10**
+[mesmo formato — score separado da média ponderada]
+
+---
+
+[Se houver DOWNSELL:]
+### BLOCO 06 — DOWNSELL
+**Pontuação: X/10**
+[mesmo formato]
+
+---
+
+### SCORE FINAL
+
+| Bloco | Nota | Peso | Score Ponderado |
+|---|---|---|---|
+| LEAD | X/10 | 25% | X,XX |
+| HISTÓRIA | X/10 | 20% | X,XX |
+| TESE | X/10 | 30% | X,XX |
+| OFERTA | X/10 | 25% | X,XX |
+| **TOTAL** | | **100%** | **X,XX/10** |
+
+Classificação:
+- 9-10 → VSL pronta para escalar
+- 7-8 → Boa — ajustes pontuais necessários
+- 5-6 → Estrutura presente, execução fraca — revisão necessária
+- 3-4 → Problemas graves em blocos essenciais
+- 1-2 → Não segue o framework — reescrita necessária
+
+---
+
+### TOP 3 — PRIORIDADE DE REVISÃO
+
+1. **[Bloco]** — [ponto mais crítico e por que é prioritário]
+2. **[Bloco]** — [segundo ponto mais crítico]
+3. **[Bloco]** — [terceiro ponto mais crítico]
+
+---
+
+### RESUMO EXECUTIVO
+
+[2-3 frases sobre o nível geral da VSL, o principal ponto forte e o principal ponto a melhorar.]
+
+---
+
+## Regras:
+- Baseie TUDO no framework. Não critique por preferência estética.
+- Cite trechos reais ao apontar pontos fortes ou fracos.
+- Para cada ponto fraco, mostre como corrigir.
+- Se um bloco estiver ausente, declare isso e explique o impacto.
+- Seja específico: "A promessa não tem especificidade — adicione um número concreto" é útil. "A promessa é vaga" não é.
+
+Ao final, ofereça: "Quer que eu reescreva algum bloco completo?" e "Quer o relatório em Word?"`;
+
+// ─── App logic ───
+const scriptEl = document.getElementById('script');
+const charCount = document.getElementById('charCount');
+
+scriptEl.addEventListener('input', () => {
+  charCount.textContent = scriptEl.value.length.toLocaleString('pt-BR');
+});
+
+function generatePrompt() {
+  const product = document.getElementById('product').value.trim();
+  const type    = document.getElementById('scriptType').value;
+  const script  = scriptEl.value.trim();
+
+  if (!script) {
+    alert('Cole o script da VSL antes de gerar o prompt.');
+    return;
+  }
+
+  const productLabel = product || 'Produto';
+
+  const prompt = `# FRAMEWORK LHTO — MEGA VSL\n\n${FRAMEWORK}\n\n---\n\n# INSTRUÇÕES DE ANÁLISE\n\n${INSTRUCTIONS}\n\n---\n\n# SCRIPT PARA ANALISAR\n\n**Produto:** ${productLabel}\n**Tipo:** ${type}\n\n${script}`;
+
+  const outputCard = document.getElementById('outputCard');
+  const promptEl   = document.getElementById('promptOutput');
+  const badge      = document.getElementById('outputBadge');
+
+  promptEl.value = prompt;
+  badge.textContent = `${type} — ${productLabel}`;
+  outputCard.classList.add('visible');
+
+  setTimeout(() => {
+    outputCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.classList.remove('copied');
+  copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar Prompt`;
+}
+
+function copyPrompt() {
+  const promptEl = document.getElementById('promptOutput');
+  const copyBtn  = document.getElementById('copyBtn');
+
+  navigator.clipboard.writeText(promptEl.value).then(() => {
+    copyBtn.classList.add('copied');
+    copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copiado!`;
+    setTimeout(() => {
+      copyBtn.classList.remove('copied');
+      copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar Prompt`;
+    }, 2500);
+  }).catch(() => {
+    promptEl.select();
+    document.execCommand('copy');
+  });
+}
+</script>
+</body>
+</html>
