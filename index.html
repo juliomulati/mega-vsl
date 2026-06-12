@@ -156,6 +156,49 @@
       margin-top: 6px;
     }
 
+    /* ── PDF Upload ── */
+    .label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .btn-upload-pdf {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(26, 63, 255, 0.08);
+      border: 1px solid rgba(26, 63, 255, 0.25);
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-upload-pdf:hover {
+      background: rgba(26, 63, 255, 0.15);
+      border-color: var(--accent);
+    }
+
+    .pdf-status {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      min-height: 18px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pdf-status.loading { color: var(--accent); }
+    .pdf-status.done    { color: var(--green); }
+    .pdf-status.error   { color: #ef4444; }
+
     /* ── Button ── */
     .btn-primary {
       width: 100%;
@@ -340,9 +383,19 @@
     </div>
 
     <div class="script-area">
-      <label for="script">Script completo</label>
+      <div class="label-row">
+        <label for="script" style="margin-bottom:0">Script completo</label>
+        <label class="btn-upload-pdf" for="pdfInput">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          Importar PDF
+        </label>
+        <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="handlePdfUpload(this)" />
+      </div>
       <textarea id="script" placeholder="Cole aqui o roteiro completo da VSL..."></textarea>
-      <div class="char-count"><span id="charCount">0</span> caracteres</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+        <div class="pdf-status" id="pdfStatus"></div>
+        <div class="char-count"><span id="charCount">0</span> caracteres</div>
+      </div>
     </div>
 
     <button class="btn-primary" id="generateBtn" onclick="generatePrompt()">
@@ -786,6 +839,62 @@ Classificação:
 - Seja específico: "A promessa não tem especificidade — adicione um número concreto" é útil. "A promessa é vaga" não é.
 
 Ao final, ofereça: "Quer que eu reescreva algum bloco completo?" e "Quer o relatório em Word?"`;
+
+// ─── PDF.js ───
+const PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+let pdfJsLoaded = false;
+
+function loadPdfJs(cb) {
+  if (pdfJsLoaded) return cb();
+  const s = document.createElement('script');
+  s.src = PDFJS_URL;
+  s.onload = () => {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    pdfJsLoaded = true;
+    cb();
+  };
+  s.onerror = () => setStatus('error', 'Erro ao carregar leitor de PDF.');
+  document.head.appendChild(s);
+}
+
+function setStatus(type, msg) {
+  const el = document.getElementById('pdfStatus');
+  el.className = 'pdf-status ' + type;
+  el.textContent = msg;
+}
+
+async function handlePdfUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  setStatus('loading', '⏳ Lendo PDF...');
+
+  loadPdfJs(async () => {
+    try {
+      const buffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+      let fullText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ');
+        fullText += pageText + '\n\n';
+      }
+      fullText = fullText.trim();
+      if (!fullText) {
+        setStatus('error', '⚠️ PDF sem texto extraível (pode ser imagem).');
+        return;
+      }
+      const scriptEl = document.getElementById('script');
+      scriptEl.value = fullText;
+      charCount.textContent = fullText.length.toLocaleString('pt-BR');
+      setStatus('done', `✓ ${pdf.numPages} página(s) importada(s) — ${fullText.length.toLocaleString('pt-BR')} caracteres`);
+    } catch (e) {
+      setStatus('error', '⚠️ Não foi possível ler o PDF. Tente colar o texto manualmente.');
+    }
+    input.value = '';
+  });
+}
 
 // ─── App logic ───
 const scriptEl = document.getElementById('script');
